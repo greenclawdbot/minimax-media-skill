@@ -7,78 +7,110 @@ description: Generate speech, video, and music using MiniMax API models. Use whe
 
 Generate speech, video, and music using MiniMax's media models.
 
+## Prerequisites
+
+Set these environment variables:
+- `MINIMAX_API_KEY` - Your MiniMax API key from [platform.minimax.io](https://platform.minimax.io/user-center/basic-information/interface-key)
+- `MINIMAX_API_HOST` - (optional) API endpoint host, defaults to `api.minimax.chat`
+
 ## Available Models
 
-### Speech Models
-- `speech-2.8-hd` - Highest quality voice synthesis
-- `speech-2.8-turbo` - Fast voice synthesis
-- `speech-2.6-hd` / `speech-2.6-turbo` - Alternative quality/speed tradeoffs
-- `speech-02-hd` / `speech-02-turbo` - Legacy models
+### Speech Models (T2A)
+| Model | Description |
+|-------|-------------|
+| `speech-2.8-hd` | Latest HD model, highest quality |
+| `speech-2.8-turbo` | Fast generation, good quality |
+| `speech-2.6-hd` | HD model with excellent cloning |
+| `speech-2.6-turbo` | Turbo model, 40 languages |
+| `speech-02-hd` | Superior rhythm and stability |
+| `speech-02-turbo` | Enhanced multilingual |
 
 ### Video Models
-- `MiniMax Hailuo 2.3` - Text-to-Video & Image-to-Video, 1080p@6s
-- `MiniMax Hailuo 2.3Fast` - Image-to-Video only, optimized
-- `MiniMax Hailuo 02` - Legacy video model
+| Model | Description |
+|-------|-------------|
+| `MiniMax-Hailuo-2.3` | T2V & I2V, SOTA physics, 1080p@6s |
+| `MiniMax-Hailuo-2.3-Fast` | I2V only, optimized for value |
+| `MiniMax-Hailuo-02` | Legacy, 1080p@10s support |
 
 ### Music Models
-- `Music-2.5` - Latest music generation with vocals
-- `Music-2.0` - Legacy music model
+| Model | Description |
+|-------|-------------|
+| `music-2.5` | Latest with vocals, professional quality |
 
 ## Usage
 
 ### Speech Generation
+
 ```bash
-# Generate speech with specific voice
-./scripts/generate_speech.sh --model speech-2.8-hd --text "Hello, this is a test" --output speech.mp3
+# Basic speech
+node scripts/generate_speech.js --text "Hello, world!" --output hello.mp3
 
 # With emotion
-./scripts/generate_speech.sh --model speech-2.8-hd --text "I'm so excited!" --emotion happy --output excited.mp3
+node scripts/generate_speech.js -t "I'm so excited!" -e happy -o excited.mp3
+
+# Different model
+node scripts/generate_speech.js -t "Quick message" -m speech-2.8-turbo -o quick.mp3
 ```
 
 ### Video Generation
-```bash
-# Text to video
-./scripts/generate_video.sh --model "MiniMax Hailuo 2.3" --prompt "A cat playing piano in a cozy room" --output video.mp4
 
-# Image to video
-./scripts/generate_video.sh --model "MiniMax Hailuo 2.3" --image input.png --output animated.mp4
+```bash
+# Text to Video
+node scripts/generate_video.js --prompt "A cat playing piano in a cozy room" --output cat.mp4
+
+# Image to Video
+node scripts/generate_video.js --image https://example.com/photo.png --output animated.mp4
+
+# Higher resolution
+node scripts/generate_video.js -p "Ocean waves" -r 1080p -o ocean.mp4
 ```
 
 ### Music Generation
+
 ```bash
-# Generate music
-./scripts/generate_music.sh --model Music-2.5 --prompt "Upbeat pop song with piano and drums" --output song.mp3
+# Basic music with lyrics
+node scripts/generate_music.js --lyrics "Hello world\nIt's a beautiful day" --prompt "Upbeat pop" --output song.mp3
+
+# Instrumental (empty lyrics)
+node scripts/generate_music.js -l "" --prompt "Relaxing piano ambient" --output instrumental.mp3
 ```
 
 ## Scripts
 
-- `scripts/generate_speech.sh` - Voice synthesis
-- `scripts/generate_video.sh` - Video generation
-- `scripts/generate_music.sh` - Music generation
-- `scripts/upload_media.sh` - Upload generated file to Discord
+| Script | Purpose |
+|--------|---------|
+| `scripts/minimax_client.js` | Core API client module |
+| `scripts/generate_speech.js` | Text-to-speech generation |
+| `scripts/generate_video.js` | Text/Image-to-video generation |
+| `scripts/generate_music.js` | Lyrics + prompt-to-music generation |
 
 ## Discord Integration
 
-Use the `message` tool with `buffer` parameter for attachments:
+To upload generated media to Discord, use Clawdbot's message tool with the `buffer` parameter:
 
-```bash
-# Pseudocode - actual implementation in scripts
-base64_encode file.mp3 > encoded.txt
-message --action send --channel discord --message "Here's your audio:" --buffer $(cat encoded.txt)
+```javascript
+// In a Clawdbot skill or script
+const fs = require('fs');
+const base64 = fs.readFileSync('output.mp3', 'base64');
+
+message({
+    action: 'send',
+    channel: 'discord',
+    message: 'Here is your audio:',
+    buffer: base64,
+    mimeType: 'audio/mpeg'
+});
 ```
 
-## Configuration
+## Error Handling
 
-Set these environment variables:
-- `MINIMAX_API_KEY` - Your MiniMax API key
-- `MINIMAX_API_ENDPOINT` - API base URL (default: MiniMax API)
+- **Missing API Key**: Throws error, set `MINIMAX_API_KEY`
+- **Polling Timeout**: Video/music generation times out after ~2 minutes
+- **Invalid Model**: API returns error, check model name
 
-## TODO
+## Troubleshooting
 
-- [ ] Implement API client for MiniMax media endpoints
-- [ ] Create speech generation script with emotion support
-- [ ] Create video generation script with resolution options
-- [ ] Create music generation script with style parameters
-- [ ] Add Discord attachment upload helper
-- [ ] Add error handling and retry logic
-- [ ] Write reference docs for each model type
+1. **"MINIMAX_API_KEY not set"** → Set environment variable or add to `.env`
+2. **Timeout on video** → Longer videos (10s) take more time
+3. **Audio not playing** → Check output format is compatible (MP3 works best)
+4. **URL expired** → MiniMax URLs expire after 24 hours (music) or 9 hours (speech async)
