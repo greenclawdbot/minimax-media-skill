@@ -6,7 +6,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const minimax = require('./minimax_client');
+const minimax = require('./minimax_client.cjs');
 const { execSync } = require('child_process');
 
 // Parse args

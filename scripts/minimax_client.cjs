@@ -5,10 +5,11 @@
 
 const fs = require('fs');
 const path = require('path');
-const http = require('http');
+const https = require('https');
 
 const API_KEY = process.env.MINIMAX_API_KEY;
-const API_HOST = process.env.MINIMAX_API_HOST || 'api.minimax.chat';
+const GROUP_ID = process.env.MINIMAX_GROUP_ID;
+const API_HOST = process.env.MINIMAX_API_HOST || 'api.minimax.io';
 const API_VERSION = process.env.MINIMAX_API_VERSION || 'v1';
 
 const BASE_URL = `https://${API_HOST}/${API_VERSION}`;
@@ -22,6 +23,12 @@ async function request(endpoint, options = {}) {
     }
 
     const url = new URL(endpoint, BASE_URL);
+    
+    // Add GroupId query param for media APIs if set
+    if (GROUP_ID && (endpoint.includes('t2a') || endpoint.includes('video') || endpoint.includes('music'))) {
+        url.searchParams.set('GroupId', GROUP_ID);
+    }
+    
     const body = options.body ? JSON.stringify(options.body) : null;
 
     const headers = {
@@ -31,8 +38,9 @@ async function request(endpoint, options = {}) {
     };
 
     return new Promise((resolve, reject) => {
-        const req = http.request({
+        const req = https.request({
             hostname: url.hostname,
+            port: 443,
             path: url.pathname + url.search,
             method: options.method || 'POST',
             headers
@@ -71,17 +79,17 @@ async function generateSpeech(text, options = {}) {
 
     const body = {
         model,
-        input: { text },
-        voice_setting: {
-            voice_id: voice,
-            emotion
-        },
+        text: text,  // Direct text field, not wrapped in input
         audio_setting: {
             format
         }
     };
 
-    const endpoint = `/audio/t2a_${model}`;
+    if (voice) body.voice_setting = { voice_id: voice };
+    if (emotion) body.voice_setting = body.voice_setting || {};
+    if (emotion) body.voice_setting.emotion = emotion;
+
+    const endpoint = '/t2a_v2';
     return request(endpoint, { body });
 }
 
