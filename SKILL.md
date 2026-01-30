@@ -11,7 +11,12 @@ Generate speech, video, and music using MiniMax's media models.
 
 Set these environment variables:
 - `MINIMAX_API_KEY` - Your MiniMax API key from [platform.minimax.io](https://platform.minimax.io/user-center/basic-information/interface-key)
+- `MINIMAX_GROUP_ID` - Your Group ID from the same page (required for media APIs)
 - `MINIMAX_API_HOST` - (optional) API endpoint host, defaults to `api.minimax.chat`
+
+## ⚠️ Note: Credits Required
+
+Media APIs (speech/video/music) require **paid credits** in your MiniMax account. The text API works without credits, but media generation returns `insufficient balance` if credits are empty.
 
 ## Available Models
 
